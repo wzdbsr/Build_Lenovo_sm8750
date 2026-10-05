@@ -190,6 +190,13 @@ jobs:
           
           wait
           echo "所有源码及llvm-Clang18工具链初始化完成！"
+          echo "→ 打入自定义：零宽字符 + ADIOS"
+          cd common
+          patch -p1 < "${{ github.workspace }}/patch/unicode-bypass_fix_5.10-6.12通用.patch"
+          patch -p1 < "${{ github.workspace }}/patch/adios_ioscheduler.patch"
+          cd ..
+
+
           echo "正在去除 ABI 保护 & 去除 dirty 后缀..."
           rm common/android/abi_gki_protected_exports_* || true
           # if [[ "${{ env.KERNEL_VERSION }}" != "6.6.102" ]]; then
@@ -392,36 +399,36 @@ jobs:
               echo "⚠️ 不支持的内核版本: $TARGET"
             fi
 
-      - name: 🔧 Add adios_ioscheduler (添加 adios_ioscheduler)
-        working-directory: kernel_workspace/common
-        run: |
-          echo "开始添加 ADIOS I/O 调度器支持..."
-          PATCH_FILE="${GITHUB_WORKSPACE}/patch/adios_ioscheduler.patch"
-          if [ ! -f "$PATCH_FILE" ]; then
-            echo "::error::未找到 ADIOS I/O 调度器补丁文件"
-            exit 1
-          fi
-          if [ -f "block/adios.c" ]; then
-            echo "✓ ADIOS I/O 调度器文件已存在，跳过应用补丁"
-          else
-            cp "$PATCH_FILE" ./adios_ioscheduler.patch
-            echo "正在应用 ADIOS I/O 调度器补丁..."
-            if patch -p1 --ignore-whitespace -F 3 < adios_ioscheduler.patch 2>&1 | tee /tmp/adios_patch.log; then
-              echo "✓ ADIOS I/O 调度器补丁应用成功"
-            else
-              echo "::warning::ADIOS 补丁应用出现问题"
-              if grep -q "malformed patch" /tmp/adios_patch.log; then
-                patch -p1 --force --ignore-whitespace < adios_ioscheduler.patch || true
-              fi
-            fi
-            rm -f adios_ioscheduler.patch
-          fi
-          if ! grep -q "CONFIG_MQ_IOSCHED_ADIOS" arch/arm64/configs/gki_defconfig; then
-            echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/gki_defconfig
-            echo "CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y" >> arch/arm64/configs/gki_defconfig
-            echo "✓ 已启用 ADIOS I/O 调度器支持"
-          fi
-          echo "✓ ADIOS I/O 调度器支持配置完成"
+      - #name: 🔧 Add adios_ioscheduler (添加 adios_ioscheduler)
+        #working-directory: kernel_workspace/common
+        #run: |
+          #echo "开始添加 ADIOS I/O 调度器支持..."
+          #PATCH_FILE="${GITHUB_WORKSPACE}/patch/adios_ioscheduler.patch"
+          #if [ ! -f "$PATCH_FILE" ]; then
+            #echo "::error::未找到 ADIOS I/O 调度器补丁文件"
+            #exit 1
+          #fi
+          #if [ -f "block/adios.c" ]; then
+            #echo "✓ ADIOS I/O 调度器文件已存在，跳过应用补丁"
+          #else
+            #cp "$PATCH_FILE" ./adios_ioscheduler.patch
+            #echo "正在应用 ADIOS I/O 调度器补丁..."
+            #if patch -p1 --ignore-whitespace -F 3 < adios_ioscheduler.patch 2>&1 | tee /tmp/adios_patch.log; then
+              #echo "✓ ADIOS I/O 调度器补丁应用成功"
+            #else
+              #echo "::warning::ADIOS 补丁应用出现问题"
+              #if grep -q "malformed patch" /tmp/adios_patch.log; then
+                #patch -p1 --force --ignore-whitespace < adios_ioscheduler.patch || true
+              #fi
+            #fi
+            #rm -f adios_ioscheduler.patch
+          #fi
+          #if ! grep -q "CONFIG_MQ_IOSCHED_ADIOS" arch/arm64/configs/gki_defconfig; then
+            #echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/gki_defconfig
+            #echo "CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y" >> arch/arm64/configs/gki_defconfig
+            #echo "✓ 已启用 ADIOS I/O 调度器支持"
+          #fi
+          #echo "✓ ADIOS I/O 调度器支持配置完成"
           
       - name: ⚙️ apply lz4 lz4 1.10.0 & zstd 1.5.7 Patch (应用lz4 1.10.0 & zstd 1.5.7补丁)
         run: |
@@ -445,35 +452,35 @@ jobs:
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/lockdown/lockdown,baseband_guard/ } }' ./common/security/Kconfig
 
       
-      - name: ⚙️ Set ReSukiSU (设置ReSukiSU)
-        run: |
-          cd kernel_workspace
-          echo "正在配置ReSukiSU..."
-          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/refs/heads/main/kernel/setup.sh" | bash -s dev
-          cd ./KernelSU 
-          KSU_VERSION=$(expr $(git rev-list --count origin/dev 2>/dev/null) + 30700 2>/dev/null || echo 114514)
-          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-          echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
+      - #name: ⚙️ Set ReSukiSU (设置ReSukiSU)
+        #run: |
+          #cd kernel_workspace
+          #echo "正在配置ReSukiSU..."
+          #curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/refs/heads/main/kernel/setup.sh" | bash -s dev
+          #cd ./KernelSU 
+          #KSU_VERSION=$(expr $(git rev-list --count origin/dev 2>/dev/null) + 30700 2>/dev/null || echo 114514)
+          #echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+          #echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
 
-      - name: 🔧 Set up SUSFS (配置 SUSFS)
-        if: ${{ env.ENABLE_SUSFS == 'true' }}
-        run: |
-          cd kernel_workspace
-          git clone --depth=1 https://github.com/cctv18/susfs4oki.git susfs4ksu -b oki-android15-6.6
-          wget https://raw.githubusercontent.com/cctv18/oppo_oplus_realme_sm8750/main/other_patch/69_hide_stuff.patch -O ./common/69_hide_stuff.patch
-          cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android15-6.6.patch ./common/
-          cp ./susfs4ksu/kernel_patches/fs/* ./common/fs/
-          cp ./susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-          cd ./common
-          patch -p1 < 50_add_susfs_in_gki-android15-6.6.patch || true
-          patch -p1 -N -F 3 < 69_hide_stuff.patch || true
-          case "${{ env.KERNEL_VERSION }}" in
-            6.6.56)
-              echo "[INFO] 当前构建内核版本为6.6.56，正在修复 undeclared identifier 'vma' 编译错误"
-              cd ./fs/proc
-              sed -i 's/vma = find_vma(mm, start_vaddr);/struct vm_area_struct *vma = find_vma(mm, start_vaddr);/' task_mmu.c
-              ;;
-          esac
+      - #name: 🔧 Set up SUSFS (配置 SUSFS)
+        #if: ${{ env.ENABLE_SUSFS == 'true' }}
+        #run: |
+          #cd kernel_workspace
+          #git clone --depth=1 https://github.com/cctv18/susfs4oki.git susfs4ksu -b oki-android15-6.6
+          #wget https://raw.githubusercontent.com/cctv18/oppo_oplus_realme_sm8750/main/other_patch/69_hide_stuff.patch -O ./common/69_hide_stuff.patch
+          #cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android15-6.6.patch ./common/
+          #cp ./susfs4ksu/kernel_patches/fs/* ./common/fs/
+          #cp ./susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+          #cd ./common
+          #patch -p1 < 50_add_susfs_in_gki-android15-6.6.patch || true
+          #patch -p1 -N -F 3 < 69_hide_stuff.patch || true
+          #case "${{ env.KERNEL_VERSION }}" in
+            #6.6.56)
+              #echo "[INFO] 当前构建内核版本为6.6.56，正在修复 undeclared identifier 'vma' 编译错误"
+              #cd ./fs/proc
+              #sed -i 's/vma = find_vma(mm, start_vaddr);/struct vm_area_struct *vma = find_vma(mm, start_vaddr);/' task_mmu.c
+              #;;
+          #esac
 
       - name: 🔧 Apply Droidspaces SYSVIPC kABI fix (应用 Droidspaces SYSVIPC kABI 修复)
         if: ${{ env.ENABLE_DROIDSPACES == 'true' }}
@@ -578,31 +585,30 @@ jobs:
           fi
 
           # ==================== KSU 配置 ====================
-          echo "CONFIG_KSU=y" >> "$DEFCONFIG"
-          echo "CONFIG_KPM=y" >> "$DEFCONFIG"
+        
 
           echo 'CONFIG_KSU_FULL_NAME_FORMAT="%TAG_NAME%-%COMMIT_SHA%-Re-TG@qdykernel"' >> "$DEFCONFIG"
 
           # ==================== SUSFS 配置 ====================
-          if [ "${{ env.ENABLE_SUSFS }}" == 'true' ];then
-            echo "CONFIG_KSU_SUSFS=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$DEFCONFIG"
-            echo "CONFIG_KSU_SUSFS_SUS_MAP=y" >> "$DEFCONFIG"
-          else
-            echo "未启用SUSFS 跳过SUSFS配置"
-          fi
+          #if [ "${{ env.ENABLE_SUSFS }}" == 'true' ];then
+            #echo "CONFIG_KSU_SUSFS=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$DEFCONFIG"
+            #echo "CONFIG_KSU_SUSFS_SUS_MAP=y" >> "$DEFCONFIG"
+          #else
+            #echo "未启用SUSFS 跳过SUSFS配置"
+          #fi
           
           echo "CONFIG_TMPFS_XATTR=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_TMPFS_POSIX_ACL=y" >> ./common/arch/arm64/configs/gki_defconfig
