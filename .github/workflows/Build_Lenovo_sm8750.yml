@@ -399,7 +399,7 @@ jobs:
               echo "⚠️ 不支持的内核版本: $TARGET"
             fi
 
-      - #name: 🔧 Add adios_ioscheduler (添加 adios_ioscheduler)
+      #- name: 🔧 Add adios_ioscheduler (添加 adios_ioscheduler)
         #working-directory: kernel_workspace/common
         #run: |
           #echo "开始添加 ADIOS I/O 调度器支持..."
@@ -452,7 +452,7 @@ jobs:
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/lockdown/lockdown,baseband_guard/ } }' ./common/security/Kconfig
 
       
-      - #name: ⚙️ Set ReSukiSU (设置ReSukiSU)
+      #- name: ⚙️ Set ReSukiSU (设置ReSukiSU)
         #run: |
           #cd kernel_workspace
           #echo "正在配置ReSukiSU..."
@@ -462,7 +462,7 @@ jobs:
           #echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           #echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
 
-      - #name: 🔧 Set up SUSFS (配置 SUSFS)
+      #- name: 🔧 Set up SUSFS (配置 SUSFS)
         #if: ${{ env.ENABLE_SUSFS == 'true' }}
         #run: |
           #cd kernel_workspace
